@@ -8,7 +8,7 @@ ddl_statement: create_database | create_table | create_index | create_udf | crea
     | drop_database | drop_table | drop_udf | drop_index | rename_table
     
 dml_statement: select_statement | insert_statement | update_statement
-    | delete_statement | load_statement | upload_statement
+    | delete_statement | load_statement | upload_statement | train_statement
     
 utility_statement: describe_statement | show_statement | help_statement | explain_statement
 
@@ -31,6 +31,9 @@ create_udf: CREATE UDF if_not_exists? udf_name INPUT create_definitions OUTPUT c
 
 // Create Materialized View
 create_materialized_view: CREATE MATERIALIZED VIEW if_not_exists? table_name ("(" uid_list ")") AS select_statement 
+
+// Train udf models
+train_statement: TRAIN WITH function_call VALUES ("(" select_statement ")")
 
 // Details
 udf_name: uid
@@ -352,6 +355,7 @@ SOME:                                "SOME"
 TABLE:                               "TABLE"
 TABLES:                              "TABLES"
 TO:                                  "TO"
+TRAIN:                               "TRAIN"
 TRUE:                                "TRUE"
 UDFS:                                "UDFS"
 UNION:                               "UNION"

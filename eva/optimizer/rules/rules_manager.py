@@ -42,6 +42,7 @@ from eva.optimizer.rules.rules import (
     LogicalFaissIndexScanToPhysical,
     LogicalFilterToPhysical,
     LogicalFunctionScanToPhysical,
+    LogicalTrainToPhysical,
 )
 from eva.optimizer.rules.rules import (
     LogicalGetToSeqScan as SequentialLogicalGetToSeqScan,
@@ -91,6 +92,7 @@ class RulesManager:
         ray_enabled = ConfigurationManager().get_value("experimental", "ray")
 
         self._implementation_rules = [
+            LogicalTrainToPhysical(),
             LogicalCreateToPhysical(),
             LogicalRenameToPhysical(),
             LogicalDropToPhysical(),

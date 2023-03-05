@@ -33,6 +33,7 @@ from eva.parser.create_mat_view_statement import CreateMaterializedViewStatement
 from eva.parser.explain_statement import ExplainStatement
 from eva.parser.rename_statement import RenameTableStatement
 from eva.parser.select_statement import SelectStatement
+from eva.parser.train_statement import TrainStatement
 from eva.parser.statement import AbstractStatement
 from eva.parser.table_ref import TableRef
 from eva.utils.generic_utils import path_to_class
@@ -147,6 +148,11 @@ class StatementBinder:
     def _bind_create_mat_statement(self, node: CreateMaterializedViewStatement):
         self.bind(node.query)
         # Todo Verify if the number projected columns matches table
+
+    @bind.register(TrainStatement)
+    def _bind_train_statement(self, node: TrainStatement):
+        self.bind(node.func_expr)
+        self.bind(node.query)
 
     @bind.register(RenameTableStatement)
     def _bind_rename_table_statement(self, node: RenameTableStatement):

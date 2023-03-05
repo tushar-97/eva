@@ -34,6 +34,7 @@ from eva.optimizer.operators import (
     LogicalRename,
     LogicalSample,
     LogicalShow,
+    LogicalTrain,
     LogicalUnion,
     LogicalUpload,
 )
@@ -52,6 +53,7 @@ from eva.parser.select_statement import SelectStatement
 from eva.parser.show_statement import ShowStatement
 from eva.parser.statement import AbstractStatement
 from eva.parser.table_ref import TableRef
+from eva.parser.train_statement import TrainStatement
 from eva.parser.upload_statement import UploadStatement
 from eva.utils.logging_manager import logger
 
@@ -317,6 +319,12 @@ class StatementToPlanConvertor:
         )
         self._plan = create_index_opr
 
+    def visit_train(self, statement: TrainStatement):
+        train_opr = LogicalTrain(statement.func_expr)
+        self.visit_select(statement.query)
+        train_opr.append_child(self._plan)
+        self._plan = train_opr
+
     def visit(self, statement: AbstractStatement):
         """Based on the instance of the statement the corresponding
            visit is called.
@@ -351,6 +359,8 @@ class StatementToPlanConvertor:
             self.visit_explain(statement)
         elif isinstance(statement, CreateIndexStatement):
             self.visit_create_index(statement)
+        elif isinstance(statement, TrainStatement):
+            self.visit_train(statement)
         return self._plan
 
     @property

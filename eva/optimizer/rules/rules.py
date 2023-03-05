@@ -37,6 +37,7 @@ from eva.plan_nodes.hash_join_build_plan import HashJoinBuildPlan
 from eva.plan_nodes.predicate_plan import PredicatePlan
 from eva.plan_nodes.project_plan import ProjectPlan
 from eva.plan_nodes.show_info_plan import ShowInfoPlan
+from eva.plan_nodes.train_plan import TrainPlan
 
 if TYPE_CHECKING:
     from eva.optimizer.optimizer_context import OptimizerContext
@@ -67,6 +68,7 @@ from eva.optimizer.operators import (
     LogicalRename,
     LogicalSample,
     LogicalShow,
+    LogicalTrain,
     LogicalUnion,
     LogicalUpload,
     Operator,
@@ -92,6 +94,7 @@ from eva.plan_nodes.seq_scan_plan import SeqScanPlan
 from eva.plan_nodes.storage_plan import StoragePlan
 from eva.plan_nodes.union_plan import UnionPlan
 from eva.plan_nodes.upload_plan import UploadPlan
+
 
 ##############################################
 # REWRITE RULES START
@@ -1119,6 +1122,25 @@ class LogicalFaissIndexScanToPhysical(Rule):
         after = FaissIndexScanPlan(
             before.index_name, before.limit_count, before.search_query_expr
         )
+        for child in before.children:
+            after.append_child(child)
+        yield after
+
+
+class LogicalTrainToPhysical(Rule):
+    def __init__(self):
+        pattern = Pattern(OperatorType.LOGICALTRAIN)
+        pattern.append_child(Pattern(OperatorType.DUMMY))
+        super().__init__(RuleType.LOGICAL_TRAIN_TO_PHYSICAL, pattern)
+
+    def promise(self):
+        return Promise.LOGICAL_TRAIN_TO_PHYSICAL
+
+    def check(self, grp_id: int, context: OptimizerContext):
+        return True
+
+    def apply(self, before: LogicalTrain, context: OptimizerContext):
+        after = TrainPlan(before.func_expr)
         for child in before.children:
             after.append_child(child)
         yield after

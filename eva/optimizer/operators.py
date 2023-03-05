@@ -61,6 +61,7 @@ class OperatorType(IntEnum):
     LOGICALCREATEINDEX = auto()
     LOGICAL_APPLY_AND_MERGE = auto()
     LOGICALFAISSINDEXSCAN = auto()
+    LOGICALTRAIN = auto()
     LOGICALDELIMITER = auto()
 
 
@@ -1256,3 +1257,21 @@ class LogicalFaissIndexScan(Operator):
                 self.search_query_expr,
             )
         )
+
+
+class LogicalTrain(Operator):
+    def __init__(self, func_expr: FunctionExpression):
+        super().__init__(OperatorType.LOGICALTRAIN)
+        self._func_expr = func_expr
+
+    @property
+    def func_expr(self):
+        return self._func_expr
+
+    def __eq__(self, other):
+        if not isinstance(other, LogicalTrain):
+            return False
+        return self._func_expr == other._func_expr
+
+    def __hash__(self) -> int:
+        return hash((super().__hash__(), self._func_expr))

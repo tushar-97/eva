@@ -14,8 +14,6 @@
 # limitations under the License.
 from typing import List, TypeVar
 
-from lark import Tree, visitors
-
 from eva.parser.lark_visitor._common_clauses_ids import CommonClauses
 from eva.parser.lark_visitor._create_statements import CreateTable
 from eva.parser.lark_visitor._drop_statement import DropTable
@@ -28,7 +26,9 @@ from eva.parser.lark_visitor._rename_statement import RenameTable
 from eva.parser.lark_visitor._select_statement import Select
 from eva.parser.lark_visitor._show_statements import Show
 from eva.parser.lark_visitor._table_sources import TableSources
+from eva.parser.lark_visitor._train_statement import Train
 from eva.parser.lark_visitor._upload_statement import Upload
+from lark import Tree, visitors
 
 # To add new functionality to the parser, create a new file under
 # the lark_visitor directory, and implement a new class which
@@ -41,7 +41,6 @@ _Leaf_T = TypeVar("_Leaf_T")
 class LarkBaseInterpreter(visitors.Interpreter):
     # Override default behavior of Interpreter
     def visit_children(self, tree: Tree[_Leaf_T]) -> List:
-
         output = [
             self._visit_tree(child) if isinstance(child, Tree) else child
             for child in tree.children
@@ -70,6 +69,7 @@ class LarkInterpreter(
     DropTable,
     Show,
     Explain,
+    Train,
 ):
     def __init__(self, query):
         super().__init__()
