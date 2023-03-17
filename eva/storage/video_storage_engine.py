@@ -32,6 +32,8 @@ class OpenCVStorageEngine(AbstractMediaStorageEngine):
         batch_mem_size: int,
         predicate: AbstractExpression = None,
         sampling_rate: int = None,
+        read_audio: bool = False,
+        read_video: bool = True
     ) -> Iterator[Batch]:
 
         for video_files in self._rdb_handler.read(self._get_metadata_table(table), 12):
@@ -43,6 +45,8 @@ class OpenCVStorageEngine(AbstractMediaStorageEngine):
                     batch_mem_size=batch_mem_size,
                     predicate=predicate,
                     sampling_rate=sampling_rate,
+                    read_audio=read_audio,
+                    read_video=read_video
                 )
                 for batch in reader.read():
                     column_name = table.columns[1].name

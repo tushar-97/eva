@@ -704,7 +704,7 @@ class LogicalGetToSeqScan(Rule):
         # Configure the batch_mem_size. It decides the number of rows
         # read in a batch from storage engine.
         # ToDO: Experiment heuristics.
-        after = SeqScanPlan(None, before.target_list, before.alias)
+        after = SeqScanPlan(before.video, None, before.target_list, before.alias)
         after.append_child(
             StoragePlan(
                 before.table_obj,

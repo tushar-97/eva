@@ -15,6 +15,7 @@
 from typing import List
 
 from eva.expression.abstract_expression import AbstractExpression
+from eva.parser.table_ref import TableRef
 from eva.plan_nodes.abstract_scan_plan import AbstractScan
 from eva.plan_nodes.types import PlanOprType
 
@@ -33,13 +34,19 @@ class SeqScanPlan(AbstractScan):
 
     def __init__(
         self,
+        table_ref: TableRef,
         predicate: AbstractExpression,
         columns: List[AbstractExpression],
         alias: str = None,
     ):
+        self._table_ref = table_ref
         self._columns = columns
         self.alias = alias
         super().__init__(PlanOprType.SEQUENTIAL_SCAN, predicate)
+
+    @property
+    def table_ref(self):
+        return self._table_ref
 
     @property
     def columns(self):
@@ -53,4 +60,6 @@ class SeqScanPlan(AbstractScan):
         )
 
     def __hash__(self) -> int:
-        return hash((super().__hash__(), tuple(self.columns or []), self.alias))
+        return hash(
+            (super().__hash__(), self.table_ref, tuple(self.columns or []), self.alias)
+        )

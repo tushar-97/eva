@@ -157,10 +157,10 @@ class TableRef:
         alias: Alias = None,
         sample_freq: float = None,
     ):
-
         self._ref_handle = table
         self._sample_freq = sample_freq
         self.alias = alias or self.generate_alias()
+        self._hints: dict = {}
 
     @property
     def sample_freq(self):
@@ -218,6 +218,13 @@ class TableRef:
         )
         return self._ref_handle
 
+    @property
+    def hints(self) -> dict:
+        return self._hints
+
+    def add_hint(self, key, value):
+        self._hints[key] = value
+
     def generate_alias(self) -> str:
         # create alias for the table
         # TableInfo -> table_name.lower()
@@ -240,7 +247,10 @@ class TableRef:
             self._ref_handle == other._ref_handle
             and self.alias == other.alias
             and self.sample_freq == other.sample_freq
+            and self.hints == other.hints
         )
 
     def __hash__(self) -> int:
-        return hash((self._ref_handle, self.alias, self.sample_freq))
+        return hash(
+            (self._ref_handle, self.alias, self.sample_freq, frozenset(self.hints))
+        )

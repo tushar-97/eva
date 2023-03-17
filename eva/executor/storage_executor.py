@@ -30,7 +30,7 @@ class StorageExecutor(AbstractExecutor):
     def validate(self):
         pass
 
-    def exec(self) -> Iterator[Batch]:
+    def exec(self, **kwargs) -> Iterator[Batch]:
         try:
             storage_engine = StorageEngine.factory(self.node.table)
 
@@ -40,6 +40,8 @@ class StorageExecutor(AbstractExecutor):
                     self.node.batch_mem_size,
                     predicate=self.node.predicate,
                     sampling_rate=self.node.sampling_rate,
+                    read_audio=True if kwargs.get("read_audio", False) else False,
+                    read_video=True if kwargs.get("read_video", False) else False,
                 )
             elif self.node.table.table_type == TableType.IMAGE_DATA:
                 return storage_engine.read(self.node.table)

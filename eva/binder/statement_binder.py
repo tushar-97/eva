@@ -131,6 +131,9 @@ class StatementBinder:
                 node.target_list = extend_star(self._binder_context)
             for expr in node.target_list:
                 self.bind(expr)
+                # checks using self._catalog.get_column_catalog_entries_by_table(node.from_table.table.table_obj)
+                node.from_table.add_hint("read_audio", True)
+                node.from_table.add_hint("read_video", False)
         if node.groupby_clause:
             self.bind(node.groupby_clause)
             check_groupby_pattern(node.groupby_clause.value)

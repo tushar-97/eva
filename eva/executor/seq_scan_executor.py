@@ -31,6 +31,7 @@ class SequentialScanExecutor(AbstractExecutor):
 
     def __init__(self, node: SeqScanPlan):
         super().__init__(node)
+        self.table_ref = node.table_ref
         self.predicate = node.predicate
         self.project_expr = node.columns
         self.alias = node.alias
@@ -42,7 +43,7 @@ class SequentialScanExecutor(AbstractExecutor):
 
         try:
             child_executor = self.children[0]
-            for batch in child_executor.exec(**kwargs):
+            for batch in child_executor.exec(**self.table_ref.hints):
                 # apply alias to the batch
                 # id, data -> myvideo.id, myvideo.data
                 if self.alias:

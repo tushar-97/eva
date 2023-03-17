@@ -15,7 +15,8 @@
 from typing import Dict, Iterator
 
 import cv2
-
+import numpy as np
+from decord import AVReader
 from eva.expression.abstract_expression import AbstractExpression
 from eva.expression.expression_utils import extract_range_list_from_predicate
 from eva.readers.abstract_reader import AbstractReader
@@ -28,6 +29,8 @@ class OpenCVReader(AbstractReader):
         *args,
         predicate: AbstractExpression = None,
         sampling_rate: int = None,
+        read_audio: bool = False,
+        read_video: bool = True,
         **kwargs
     ):
         """Read frames from the disk
@@ -41,11 +44,20 @@ class OpenCVReader(AbstractReader):
         """
         self._predicate = predicate
         self._sampling_rate = sampling_rate or 1
+        self._read_audio = read_audio
+        self._read_video = read_video
         super().__init__(*args, **kwargs)
 
     def _read(self) -> Iterator[Dict]:
-        video = cv2.VideoCapture(self.file_url)
-        num_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        video = cv2.VideoCapture(self.file_url) if self._read_video else None
+        av = (
+            AVReader(self.file_url, mono=True, sample_rate=16000)
+            if self._read_audio
+            else None
+        )
+        num_frames = (
+            int(video.get(cv2.CAP_PROP_FRAME_COUNT)) if self._read_video else len(av)
+        )
         if self._predicate:
             range_list = extract_range_list_from_predicate(
                 self._predicate, 0, num_frames - 1
@@ -54,21 +66,31 @@ class OpenCVReader(AbstractReader):
             range_list = [(0, num_frames - 1)]
         logger.debug("Reading frames")
         if self._sampling_rate == 1:
-            for (begin, end) in range_list:
-                video.set(cv2.CAP_PROP_POS_FRAMES, begin)
-                _, frame = video.read()
+            video_frame = np.empty((0, 0, 0))
+            audio_frame = np.empty(0)
+            for begin, end in range_list:
                 frame_id = begin
-                while frame is not None and frame_id <= end:
+                if self._read_video:
+                    video.set(cv2.CAP_PROP_POS_FRAMES, begin)
+                    _, video_frame = video.read()
+                if self._read_audio:
+                    audio_frame = av[frame_id][0].asnumpy()
+                while video_frame is not None and frame_id <= end:
+                    if self._read_audio:
+                        audio_frame = av[frame_id][0].asnumpy()
                     yield {
                         "id": frame_id,
-                        "data": frame,
-                        "seconds": frame_id // video.get(cv2.CAP_PROP_FPS),
+                        "data": video_frame,
+                        "seconds": frame_id // video.get(cv2.CAP_PROP_FPS)
+                        if self._read_video
+                        else 0,
+                        "audio": audio_frame,
                     }
-                    _, frame = video.read()
+                    if self._read_video:
+                        _, video_frame = video.read()
                     frame_id += 1
         else:
             for begin, end in range_list:
-
                 # align begin with sampling rate
                 if begin % self._sampling_rate:
                     begin += self._sampling_rate - (begin % self._sampling_rate)
