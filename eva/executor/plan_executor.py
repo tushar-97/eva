@@ -42,6 +42,7 @@ from eva.executor.project_executor import ProjectExecutor
 from eva.executor.rename_executor import RenameExecutor
 from eva.executor.sample_executor import SampleExecutor
 from eva.executor.seq_scan_executor import SequentialScanExecutor
+from eva.executor.set_executor import SetExecutor
 from eva.executor.show_info_executor import ShowInfoExecutor
 from eva.executor.storage_executor import StorageExecutor
 from eva.executor.union_executor import UnionExecutor
@@ -141,6 +142,8 @@ class PlanExecutor:
             executor_node = FaissIndexScanExecutor(node=plan)
         elif plan_opr_type == PlanOprType.DELETE:
             executor_node = DeleteExecutor(node=plan)
+        elif plan_opr_type == PlanOprType.SET:
+            executor_node = SetExecutor(node=plan)
 
         # EXPLAIN does not need to build execution tree for its children
         if plan_opr_type != PlanOprType.EXPLAIN:

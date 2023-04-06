@@ -27,6 +27,7 @@ from eva.parser.lark_visitor._insert_statements import Insert
 from eva.parser.lark_visitor._load_statement import Load
 from eva.parser.lark_visitor._rename_statement import RenameTable
 from eva.parser.lark_visitor._select_statement import Select
+from eva.parser.lark_visitor._set_statement import Set
 from eva.parser.lark_visitor._show_statements import Show
 from eva.parser.lark_visitor._table_sources import TableSources
 
@@ -69,6 +70,7 @@ class LarkInterpreter(
     Show,
     Explain,
     Delete,
+    Set,
 ):
     def __init__(self, query):
         super().__init__()

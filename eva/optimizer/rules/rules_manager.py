@@ -64,6 +64,7 @@ from eva.optimizer.rules.rules import (
 )
 from eva.optimizer.rules.rules import (
     LogicalRenameToPhysical,
+    LogicalSetToPhysical,
     LogicalShowToPhysical,
     LogicalUnionToPhysical,
     PushDownFilterThroughApplyAndMerge,
@@ -127,6 +128,7 @@ class RulesManager:
             LogicalCreateIndexToFaiss(),
             LogicalApplyAndMergeToPhysical(),
             LogicalFaissIndexScanToPhysical(),
+            LogicalSetToPhysical(),
         ]
 
         if ray_enabled:

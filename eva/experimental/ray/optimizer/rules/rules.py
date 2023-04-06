@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from eva.configuration.configuration_manager import ConfigurationManager
 from eva.optimizer.rules.pattern import Pattern
 
 if TYPE_CHECKING:
@@ -87,8 +88,6 @@ class LogicalGetToSeqScan(Rule):
         return True
 
     def apply(self, before: LogicalGet, context: OptimizerContext):
-        # Configure the batch_mem_size. It decides the number of rows
-        # read in a batch from storage engine.
         # ToDO: Experiment heuristics.
         scan = SeqScanPlan(None, before.target_list, before.alias)
         lower = ExchangePlan(parallelism=1)
@@ -98,6 +97,9 @@ class LogicalGetToSeqScan(Rule):
                 before.video,
                 predicate=before.predicate,
                 sampling_rate=before.sampling_rate,
+                batch_mem_size=ConfigurationManager().get_value(
+                    "executor", "batch_mem_size"
+                ),
             )
         )
         scan.append_child(lower)

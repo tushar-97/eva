@@ -63,6 +63,7 @@ class OperatorType(IntEnum):
     LOGICALCREATEINDEX = auto()
     LOGICAL_APPLY_AND_MERGE = auto()
     LOGICALFAISSINDEXSCAN = auto()
+    LOGICALSET = auto()
     LOGICALDELIMITER = auto()
 
 
@@ -1266,3 +1267,33 @@ class LogicalFaissIndexScan(Operator):
                 self.search_query_expr,
             )
         )
+
+
+class LogicalSet(Operator):
+    def __init__(
+        self,
+        set_option: ConstantValueExpression,
+        set_value: ConstantValueExpression,
+    ):
+        super().__init__(OperatorType.LOGICALSET)
+        self._set_option = set_option
+        self._set_value = set_value
+
+    @property
+    def set_option(self):
+        return self._set_option
+
+    @property
+    def set_value(self):
+        return self._set_value
+
+    def __eq__(self, other):
+        if not isinstance(other, LogicalSet):
+            return False
+        return (
+            self._set_option == other._set_option
+            and self._set_value == other._set_value
+        )
+
+    def __hash__(self) -> int:
+        return hash((super().__hash__(), self._set_option, self._set_value))

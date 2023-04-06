@@ -61,6 +61,7 @@ from eva.optimizer.rules.rules import (
     LogicalOrderByToPhysical,
     LogicalProjectToPhysical,
     LogicalRenameToPhysical,
+    LogicalSetToPhysical,
     LogicalShowToPhysical,
     LogicalUnionToPhysical,
     Promise,
@@ -138,6 +139,7 @@ class RulesTest(unittest.TestCase):
             Promise.LOGICAL_CREATE_INDEX_TO_FAISS,
             Promise.LOGICAL_APPLY_AND_MERGE_TO_PHYSICAL,
             Promise.LOGICAL_FAISS_INDEX_SCAN_TO_PHYSICAL,
+            Promise.LOGICAL_SET_TO_PHYSICAL,
         ]
 
         for promise in implementation_promises:
@@ -213,6 +215,7 @@ class RulesTest(unittest.TestCase):
             LogicalCreateIndexToFaiss(),
             LogicalApplyAndMergeToPhysical(),
             LogicalFaissIndexScanToPhysical(),
+            LogicalSetToPhysical(),
         ]
 
         ray_enabled = ConfigurationManager().get_value("experimental", "ray")

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 from eva.catalog.catalog_manager import CatalogManager
 from eva.catalog.catalog_type import TableType
 from eva.catalog.catalog_utils import is_video_table
+from eva.configuration.configuration_manager import ConfigurationManager
 from eva.constants import CACHEABLE_UDFS
 from eva.expression.expression_utils import (
     conjunction_list_to_expression_tree,
@@ -43,6 +44,7 @@ from eva.plan_nodes.hash_join_build_plan import HashJoinBuildPlan
 from eva.plan_nodes.nested_loop_join_plan import NestedLoopJoinPlan
 from eva.plan_nodes.predicate_plan import PredicatePlan
 from eva.plan_nodes.project_plan import ProjectPlan
+from eva.plan_nodes.set_plan import SetPlan
 from eva.plan_nodes.show_info_plan import ShowInfoPlan
 
 if TYPE_CHECKING:
@@ -73,6 +75,7 @@ from eva.optimizer.operators import (
     LogicalQueryDerivedGet,
     LogicalRename,
     LogicalSample,
+    LogicalSet,
     LogicalShow,
     LogicalUnion,
     Operator,
@@ -763,6 +766,7 @@ class LogicalLoadToPhysical(Rule):
             before.path,
             before.column_list,
             before.file_options,
+            ConfigurationManager().get_value("executor", "batch_mem_size"),
         )
         yield after
 
@@ -779,8 +783,6 @@ class LogicalGetToSeqScan(Rule):
         return True
 
     def apply(self, before: LogicalGet, context: OptimizerContext):
-        # Configure the batch_mem_size. It decides the number of rows
-        # read in a batch from storage engine.
         # ToDO: Experiment heuristics.
         after = SeqScanPlan(None, before.target_list, before.alias)
         after.append_child(
@@ -790,6 +792,9 @@ class LogicalGetToSeqScan(Rule):
                 predicate=before.predicate,
                 sampling_rate=before.sampling_rate,
                 sampling_type=before.sampling_type,
+                batch_mem_size=ConfigurationManager().get_value(
+                    "executor", "batch_mem_size"
+                ),
             )
         )
         yield after
@@ -1148,6 +1153,25 @@ class LogicalFaissIndexScanToPhysical(Rule):
         after = FaissIndexScanPlan(
             before.index_name, before.limit_count, before.search_query_expr
         )
+        for child in before.children:
+            after.append_child(child)
+        yield after
+
+
+class LogicalSetToPhysical(Rule):
+    def __init__(self):
+        pattern = Pattern(OperatorType.LOGICALSET)
+        # pattern.append_child(Pattern(OperatorType.DUMMY))
+        super().__init__(RuleType.LOGICAL_SET_TO_PHYSICAL, pattern)
+
+    def promise(self):
+        return Promise.LOGICAL_SET_TO_PHYSICAL
+
+    def check(self, grp_id: int, context: OptimizerContext):
+        return True
+
+    def apply(self, before: LogicalSet, context: OptimizerContext):
+        after = SetPlan(before.set_option, before.set_value)
         for child in before.children:
             after.append_child(child)
         yield after

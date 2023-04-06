@@ -25,6 +25,7 @@ from eva.configuration.constants import (
 
 
 class ConfigurationManager(object):
+    _config_obj: dict = None
     _yml_path = EVA_DEFAULT_DIR / EVA_CONFIG_FILE
 
     def __new__(cls):
@@ -41,49 +42,45 @@ class ConfigurationManager(object):
                 eva_config_dir=EVA_DEFAULT_DIR,
                 eva_installation_dir=EVA_INSTALLATION_DIR,
             )
-
-    @classmethod
-    def _get(cls, category: str, key: str) -> Any:
         with cls._yml_path.open("r") as yml_file:
             config_obj = yaml.load(yml_file, Loader=yaml.FullLoader)
             if config_obj is None:
-                raise ValueError(f"Invalid yaml file at {cls._yml_path}")
-            key_error = (
-                f"Add the entry '{category}: {key}' to the yaml file. Or, if "
-                f"you did not modify the yaml file, remove it (rm {cls._yml_path}),"
-                f"and the system will auto-generate one."
+                raise ValueError(f"Invalid yml file at {cls._yml_path}")
+            cls._config_obj = config_obj
+
+    @classmethod
+    def _get(cls, category: str, key: str) -> Any:
+        key_error = (
+            f"Add the entry '{category}: {key}' to the yaml file. Or, if "
+            f"you did not modify the yaml file, remove it (rm {cls._yml_path}),"
+            f"and the system will auto-generate one."
+        )
+        if category not in cls._config_obj:
+            raise KeyError(
+                f"Missing category '{category}' in the yaml file at {cls._yml_path}. {key_error}"
             )
-            if category not in config_obj:
-                raise KeyError(
-                    f"Missing category '{category}' in the yaml file at {cls._yml_path}. {key_error}"
-                )
-            if key not in config_obj[category]:
-                raise KeyError(
-                    f"Missing key {key} for the category {category} in the yaml file at {cls._yml_path}. {key_error}"
-                )
-            return config_obj[category][key]
+        if key not in cls._config_obj[category]:
+            raise KeyError(
+                f"Missing key {key} for the category {category} in the yaml file at {cls._yml_path}. {key_error}"
+            )
+        return cls._config_obj[category][key]
 
     @classmethod
     def _update(cls, category: str, key: str, value: str):
         with cls._yml_path.open("r+") as yml_file:
-            config_obj = yaml.load(yml_file, Loader=yaml.FullLoader)
-
-            if config_obj is None:
-                raise ValueError(f"Invalid yml file at {cls._yml_path}")
-
             key_error = (
                 f"Cannot update the key {key} for the missing category {category}."
                 f"Add the entry '{category}' to the yaml file. Or, if "
                 f"you did not modify the yaml file, remove it (rm {cls._yml_path}),"
                 f"and the system will auto-generate one."
             )
-            if category not in config_obj:
+            if category not in cls._config_obj:
                 raise KeyError(
                     f"Missing category '{category}' in the yaml file at {cls._yml_path}. {key_error}"
                 )
-            config_obj[category][key] = value
+            cls._config_obj[category][key] = value
             yml_file.seek(0)
-            yml_file.write(yaml.dump(config_obj))
+            yml_file.write(yaml.dump(cls._config_obj))
             yml_file.truncate()
 
     @classmethod
@@ -93,3 +90,9 @@ class ConfigurationManager(object):
     @classmethod
     def update_value(cls, category, key, value) -> None:
         cls._update(category, key, value)
+
+    @classmethod
+    def set_value(cls, category: str, key: str, value: Any) -> None:
+        category = category.lower()
+        key = key.lower()
+        cls._config_obj.setdefault(category, {})[key] = value

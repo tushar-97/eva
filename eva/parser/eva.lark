@@ -10,7 +10,7 @@ ddl_statement: create_database | create_table | create_index | create_udf | crea
 dml_statement: select_statement | insert_statement | update_statement
     | delete_statement | load_statement
     
-utility_statement: describe_statement | show_statement | help_statement | explain_statement
+utility_statement: describe_statement | show_statement | help_statement | explain_statement | set_statement
 
 // Data Definition Language
 
@@ -86,7 +86,11 @@ select_statement: query_specification                          ->simple_select
 update_statement: UPDATE table_name (AS? uid)? SET updated_element ("," updated_element)* (WHERE expression)? order_by_clause? limit_clause?
     
 load_statement: LOAD file_format file_name INTO table_name (("(" uid_list ")"))?
-    
+
+set_statement: SET set_option decimal_literal
+
+set_option: BATCH_MEM_SIZE
+
 file_format: CSV | VIDEO | IMAGE
 
 file_options: FORMAT file_format
@@ -304,6 +308,7 @@ ANYDIM:                              "ANYDIM"
 AS:                                  "AS"
 ASC:                                 "ASC"
 BLOB:                                "BLOB"
+BATCH_MEM_SIZE:                      "BATCH_MEM_SIZE"
 BY:                                  "BY"
 COLUMN:                              "COLUMN"
 CREATE:                              "CREATE"
